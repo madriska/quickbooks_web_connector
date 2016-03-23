@@ -77,6 +77,11 @@ module QuickbooksWebConnector
         job = QuickbooksWebConnector::Job.peek
         request_xml = job ? job.request_xml : nil
 
+        Rails.logger.tagged "QBWC" do
+          Rails.logger.debug "Request XML"
+          Rails.logger.debug request_xml
+        end
+
         SendRequestXMLResponse.new request_xml
       end
 
