@@ -62,24 +62,15 @@ module QuickbooksWebConnector
     # Calls #perform on the class given in the payload with the
     # Quickbooks response and the arguments given in the payload..
     def perform
-      begin
-        job = response_handler_class
+      job = response_handler_class
 
-        # Execute the job.
-        job.perform(response_xml, *job_args)
-      rescue Object => ex
-        fail(ex)
-      end
+      # Execute the job.
+      job.perform(response_xml, *job_args)
     end
 
     # Returns the request XML from the payload.
     def request_xml
-      begin
-        request_builder_class.perform(*job_args)
-      rescue Object => ex
-        fail(ex)
-        nil
-      end
+      request_builder_class.perform(*job_args)
     end
 
     # Returns the actual class constant for building the request from the job's payload.
