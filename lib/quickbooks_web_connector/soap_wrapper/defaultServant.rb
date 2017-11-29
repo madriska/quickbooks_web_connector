@@ -95,6 +95,11 @@ module QuickbooksWebConnector
       #   parameters      ReceiveResponseXMLResponse - {http://developer.intuit.com/}receiveResponseXMLResponse
       #
       def receiveResponseXML(parameters)
+        Rails.logger.tagged "QBWC" do
+          Rails.logger.debug "Response XML"
+          Rails.logger.debug parameters.response
+        end
+
         job = QuickbooksWebConnector::Job.reserve
         job.response_xml = parameters.response
         job.perform
