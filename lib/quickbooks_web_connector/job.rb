@@ -70,7 +70,12 @@ module QuickbooksWebConnector
 
     # Returns the request XML from the payload.
     def request_xml
-      request_builder_class.perform(*job_args)
+      begin
+        request_builder_class.perform(*job_args)
+      rescue Object => ex
+        fail(ex)
+        nil
+      end
     end
 
     # Returns the actual class constant for building the request from the job's payload.

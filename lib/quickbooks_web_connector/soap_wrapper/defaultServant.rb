@@ -74,15 +74,36 @@ module QuickbooksWebConnector
       #   parameters      SendRequestXMLResponse - {http://developer.intuit.com/}sendRequestXMLResponse
       #
       def sendRequestXML(parameters)
-        job = QuickbooksWebConnector::Job.peek
-        request_xml = job ? job.request_xml : nil
+        if (job = QuickbooksWebConnector::Job.peek)
+          case (request_xml = job.request_xml)
+          when :failed
+            Rails.logger.tagged "QBWC" do
+              Rails.logger.debug "Request failed:"
+              Rails.logger.debug(job.inspect)
+            end
 
+            raise RequestXMLError
+          else
+
+          Rails.logger.tagged "QBWC" do
+            Rails.logger.debug "Request XML"
+            Rails.logger.debug request_xml
+          end
+
+            SendRequestXMLResponse.new request_xml
+          end
+        else
+          SendRequestXMLResponse.new nil
+        end
+      rescue RequestXMLError => e
         Rails.logger.tagged "QBWC" do
-          Rails.logger.debug "Request XML"
-          Rails.logger.debug request_xml
+          Rails.logger.debug "Request XML error, retrying:"
+          Rails.logger.debug(e.inspect)
         end
 
-        SendRequestXMLResponse.new request_xml
+        # Remove the job from the queue since it fails to build. The job should have already created a failure.
+        QuickbooksWebConnector.pop
+        retry
       end
 
       # SYNOPSIS
