@@ -24,6 +24,12 @@ module QuickbooksWebConnector
       @router.external_ces = nil
       response_data = @router.route(@connection_data)
       response_data.send_string
+    rescue => e
+      if handle = QuickbooksWebConnector.config.soap_error_handler
+        handle.(e)
+      end
+
+      raise
     end
 
   end

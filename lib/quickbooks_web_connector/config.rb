@@ -42,6 +42,8 @@ module QuickbooksWebConnector
     config_accessor :app_name
     config_accessor :app_description
 
+    config_accessor :soap_error_handler
+
     def initialize
       config.users = {}
     end
