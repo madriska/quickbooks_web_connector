@@ -1,5 +1,31 @@
 ### Unreleased
 
+### 0.8.0 - 2018-07-29
+
+* enhancements
+  * Add `after_authenticate` config callback to run a custom block after the web connector authenticates
+
+### 0.7.1 - 2018-03-01
+
+* bug fix
+  * Catch when QuickBooks calls ReceiveResponseXML with an error message and fail job rather than trying to perform handler
+  * Replace non-ASCII characters in request XML data with decimal entities to fix QuickBooks being unable to parse such XML requests
+
+### 0.7.0 - 2018-01-27
+
+* enhancements
+  * Add support for Rails 5.1
+  * Add support for Ruby 2.5
+
+* breaking change
+  * Drop support for Rails 3.2, 4.0, 4.1, and 4.2
+  * Drop support for Ruby 2.0 - 2.1
+
+### 0.6.3 - 2018-01-20
+
+* enhancements
+  * Add support for Ruby 2.2 - 2.4 and Rails 4.2 and 5.0
+
 ### 0.6.2 - 2016-11-10
 
 * bug fix

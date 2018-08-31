@@ -1,18 +1,14 @@
 language: ruby
 
 rvm:
-  - 2.0
-  - 2.1
   - 2.2
+  - 2.3
+  - 2.4
+  - 2.5
 
 gemfile:
-  - gemfiles/rails_32.gemfile
-  - gemfiles/rails_40.gemfile
-  - gemfiles/rails_41.gemfile
-
-matrix:
-  allow_failures:
-    - rvm: 2.2
+  - gemfiles/rails_50.gemfile
+  - gemfiles/rails_51.gemfile
 
 sudo: false
 

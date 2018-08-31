@@ -49,6 +49,8 @@ module QuickbooksWebConnector
         user = QuickbooksWebConnector.config.users[parameters.strUserName]
 
         result = if user && user.valid_password?(parameters.strPassword)
+          QuickbooksWebConnector.config.run_after_authenticate
+
           if QuickbooksWebConnector.size > 0
             # Store how many jobs are queued so we can track progress later
             QuickbooksWebConnector.store_job_count_for_session
@@ -122,8 +124,13 @@ module QuickbooksWebConnector
         end
 
         job = QuickbooksWebConnector::Job.reserve
-        job.response_xml = parameters.response
-        job.perform
+
+        if parameters.message.present?
+          job.fail(ReceiveResponseXMLError.new(parameters.message))
+        else
+          job.response_xml = parameters.response
+          job.perform
+        end
 
         progress = if QuickbooksWebConnector.size == 0
           # We're done

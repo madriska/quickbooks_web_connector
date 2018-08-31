@@ -2,6 +2,8 @@
 ENV["RAILS_ENV"] = "test"
 require File.expand_path("../dummy/config/environment.rb", __FILE__)
 
+require 'rails-controller-testing'
+
 $dir = File.dirname(File.expand_path(__FILE__))
 
 require 'rspec/rails'
@@ -10,6 +12,15 @@ require 'rexml/document'
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support and it's subdirectories
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
+
+# Rails defines a custom params parser for XML that expects a 'hash' key as the root, but our XML doesn't match that
+ActionController::TestRequest.prepend(Module.new do
+  def initialize(*)
+    super
+
+    @custom_param_parsers[:xml] =  lambda { |raw_post| Hash.from_xml(raw_post) }
+  end
+end)
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|

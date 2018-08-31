@@ -49,11 +49,27 @@ describe QuickbooksWebConnector::SoapWrapper::QBWebConnectorSvcSoap do
       it 'returns "nvu" with an invalid user' do
         expect(response.authenticateResult[1]).to eq('nvu')
       end
+
+      it 'does not run the after authenticate callback' do
+        expect do |block|
+          QuickbooksWebConnector.config.after_authenticate(&block)
+
+          response
+        end.to_not yield_control
+      end
     end
 
     context 'authorized' do
       before do
         QuickbooksWebConnector.config.user 'foo', 'bar', '/path/to/company.qbw'
+      end
+
+      it 'runs the after authenticate callback' do
+        expect do |block|
+          QuickbooksWebConnector.config.after_authenticate(&block)
+
+          response
+        end.to yield_control
       end
 
       context 'has no data to send' do
@@ -118,24 +134,49 @@ describe QuickbooksWebConnector::SoapWrapper::QBWebConnectorSvcSoap do
   end
 
   describe 'receiveResponseXML' do
-    subject(:response) { servant.receiveResponseXML(double(:parameters, response: '<response><xml></xml></response>')) }
-
-    before do
-      QuickbooksWebConnector.enqueue '<request><xml></xml></request>', SomeHandler, 1
-      expect(SomeHandler).to receive(:perform).with('<response><xml></xml></response>', 1)
-    end
+    let(:receive_response_xml) { QuickbooksWebConnector::SoapWrapper::ReceiveResponseXML.new }
 
     it 'returns 100 when no more jobs are left' do
+      QuickbooksWebConnector.enqueue '<request><xml></xml></request>', SomeHandler, 1
+
+      allow(SomeHandler).to receive(:perform)
+
+      receive_response_xml.response = '<response><xml></xml></response>'
+
+      response = servant.receiveResponseXML(receive_response_xml)
+
       expect(response).to be_a(QuickbooksWebConnector::SoapWrapper::ReceiveResponseXMLResponse)
       expect(response.receiveResponseXMLResult).to eq(100)
+
+      expect(SomeHandler).to have_received(:perform).with(receive_response_xml.response, 1)
     end
 
     it 'returns the progress for the session when there are jobs left' do
+      QuickbooksWebConnector.enqueue '<request><xml></xml></request>', SomeHandler, 1
       QuickbooksWebConnector.enqueue '<other><xml></xml></other>', SomeHandler, 2
       QuickbooksWebConnector.store_job_count_for_session
 
+      response = servant.receiveResponseXML(receive_response_xml)
+
       expect(response).to be_a(QuickbooksWebConnector::SoapWrapper::ReceiveResponseXMLResponse)
       expect(response.receiveResponseXMLResult).to eq(50)
+    end
+
+    it 'fails the job when QuickBooks returns an error message' do
+      QuickbooksWebConnector.enqueue '<request><xml></xml></request>', SomeHandler, 1
+
+      receive_response_xml.message = 'QuickBooks found an error when parsing the provided XML text stream.'
+
+      response = servant.receiveResponseXML(receive_response_xml)
+
+      expect(response).to be_a(QuickbooksWebConnector::SoapWrapper::ReceiveResponseXMLResponse)
+      expect(response.receiveResponseXMLResult).to eq(100)
+
+      expect(QuickbooksWebConnector::Failure.count).to be(1)
+
+      item = QuickbooksWebConnector::Failure.all.first
+      expect(item['exception']).to eq('QuickbooksWebConnector::ReceiveResponseXMLError')
+      expect(item['error']).to eq('QuickBooks found an error when parsing the provided XML text stream.')
     end
   end
 
